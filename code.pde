@@ -13,13 +13,10 @@ ArrayList particles;
 int score = 0;
 int pX = 480;
 int pY = 400;
+
 int pRotation;
 int pStorage = 400;
 int pFlash = 0;
-
-int aimX = 480;
-int aimY = 400;
-int aimRotation;
 
 void setup() {
     width = 960;
@@ -30,6 +27,14 @@ void setup() {
     bullets = new ArrayList();
     particles = new ArrayList();
     textFont(myfont);
+    for (int i; i<=30; i++) {
+            computers.add(new Computer(random(width),random(height)));
+    };
+    Particle c = (Computer) computers.get(0);
+        c.x = width/2;
+        c.y = height/2;
+        c.isMain = 1;
+        c.dataLeft = 0;
 };
  
 Number.prototype.between = function (min, max) {
@@ -43,7 +48,6 @@ void draw() {
     for (int i=computers.size()-1; i>=0; i--) {
         Particle c = (Computer) computers.get(i);
         c.draw();
-        c.enter();
     }
     
     for (int i=particles.size()-1; i>=0; i--) {
@@ -65,15 +69,6 @@ void draw() {
         b.update();
         if (b.x < 0 || b.x > width || b.y < 0 || b.y > height) {bullets.remove(i);}
     }
-    stroke(255,0,0);
-    strokeWeight(10);
-    line(pX,pY,pX,pY);
-    
-    aimRotation = atan2(mouseY - aimY, mouseX - aimX) / PI * 180;
-    if (dist(aimX,aimY,mouseX,mouseY) > 5) {
-    aimX += cos(aimRotation/180*PI)*2;
-    aimY += sin(aimRotation/180*PI)*2;
-    }
     
     for (int i=bullets.size()-1; i>=0; i--) {
         Particle b = (Bullet) bullets.get(i);
@@ -81,22 +76,22 @@ void draw() {
     }
     
     strokeWeight(1);
-    line(pX,pY,aimX,aimY);
+    
+    line(pX,pY,mouseX,mouseY);
     
     stroke(255);
     fill(0);
     rect(0,0,pStorage,10);
     fill(255);
+    textSize(12);
     text(round(pStorage) + "GB",0,10);
     
-    if (pStorage > 0) {pStorage -= 0.05;}
-
-    
+    if (pStorage > 0) {pStorage -= 0.1;}
 }
 
 void mouseClicked() {
     // if (pStorage > 4) {
-        bullets.add(new Bullet(pX-5,pY-5,aimX,aimY,0));
+        bullets.add(new Bullet(pX-5,pY-5,mouseX,mouseY,0));
         pStorage -= 4;
     // }
     
@@ -104,30 +99,15 @@ void mouseClicked() {
 };
 
 void keyPressed() {
-    
-    // if (key == 'd' || key == 'D') {
-    //     if (pStorage > 1) {pStorage -= 0.1;}
-    //     pRotation = atan2(aimY - pY, aimX - pX) / PI * 180;
-    //     if (dist(aimX,aimY,pX,pY) > 5) {
-    //         pX += cos(pRotation/180*PI)*8;
-    //         pY += sin(pRotation/180*PI)*8;
-    //     }
-    // }
-    
-    if (key == 'd' || key == 'D') {pX += 8;}
-    if (key == 'w' || key == 'W') {pY -= 8;}
-    if (key == 'a' || key == 'A') {pX -= 8;}
-    if (key == 's' || key == 'S') {pY += 8;}
-    
     if (key == 'h' || key == 'H') {
         fill(0,0);
         stroke(255,0,0);
         pFlash -= 10;
         if (pFlash <= 0) {pFlash = 300;}
-        ellipse(pX, pY, pFlash, pFlash);
+        ellipse(mouseX, mouseY, pFlash, pFlash);
         for (int i=securities.size()-1; i>=0; i--) {
             Particle s = (Security) securities.get(i);
-            if (dist(pX,pY,s.x,s.y) < 151 && s.mode == 0) {
+            if (dist(mouseX,mouseY,s.x,s.y) < 151 && s.mode == 0) {
                     for (int i=computers.size()-1; i>=0; i--) {
                         Particle c = (Computer) computers.get(i);
                         if (dist(c.x,c.y,s.x,s.y) < 50 && c.infested == 1) {
@@ -144,13 +124,7 @@ void keyPressed() {
             Particle c = (Computer) computers.get(i);
             c.hack();
         }
-    }
-    
-    if (key == 'u' || key == 'U') {
-        for (int i=computers.size()-1; i>=0; i--) {
-            Particle c = (Computer) computers.get(i);
-            c.unhack();
-        }
+        line(mouseX,mouseY,pX,pY);
     }
     
     if (key == 'c' || key == 'C') {
@@ -168,50 +142,72 @@ class Computer {
     float dataLeft = 0;
     float dataSpace = 0;
     float infested = 0;
-    float toughness = 0;
+    float weakness = 0;
+    float hasSecurity = 0;
+    float isMain = 0;
+    float tier = 0;
+    float job = 0;
+    float pT = 0;
     
     Computer(ox,oy) {
         x = ox;
         y = oy;
+        tier = round(random(4));
+        job = round(random(tier));
         dataLeft = round(random(100,300));
         dataSpace = dataLeft;
-        toughness = random(1);
+        weakness = random(0.2,1);
+        if (weakness < 0.4) {hasSecurity = round(random(5));}
     };
     
     void draw() {
         fill(0,0);
         strokeWeight(1);
         stroke(255,255 * (dataLeft/dataSpace),255 * (dataLeft/dataSpace));
-        rect(this.x - 40/2, this.y - 40/2, 40, 40);
         
-        if (infested == 1) {
-            stroke(255,50);
+        if (isMain == 1) {strokeWeight(4);}
+        rect(this.x - 20, this.y - 20, 40, 30);
+        rect(this.x - 10, this.y + 10, 20, 5);
+        rect(this.x - 18, this.y + 15, 36, 5);
+        
+        if (dist(x,y,mouseX,mouseY) < 30) {
+            fill(255,255 * (dataLeft/dataSpace),255 * (dataLeft/dataSpace));
+            textSize(10);
+            text("Tier " + tier + " com",this.x - 45,this.y - 30);
+        }
+        
+        for (int i=computers.size()-1; i>=0; i--) {
+            Particle c = (Computer) computers.get(i);
+            if (c.isMain == 0 && dist(x,y,c.x,c.y) < 40 && dist(x,y,c.x,c.y) > 1) {computers.remove(i);}
+        }
+        
+        if (isMain == 1) {
+            pX = x; pY = y;
+        }
+        
+        if (dataLeft <= 0) {
+            stroke(255,0,0,50);
             line(this.x,this.y,pX,pY);
-        }
-    };
-    
-    void enter() {
-        if (pX.between(this.x - 20,this.x + 20) && pY.between(this.y - 20,this.y + 20) && infested == 0) {
-            for (int i; i <= 10; i++) {
-                particles.add(new Particle(pX,pY,0,100));
-            }
-            infested = 1;
-            
-        }
-    };
-    
-    void unhack() {
-        if (aimX.between(this.x - 20,this.x + 20) && aimY.between(this.y - 20,this.y + 20) && infested == 1) {
-            infested = 0;
         }
     };
     
     void hack() {
-        if (infested == 1 && dataLeft > 0 && pStorage < 960 && dist(x,y,pX,pY) < 151) {
-            dataLeft -= toughness;
-            pStorage += toughness/2;
+        if (dataLeft > 0 && pStorage < 960 && dist(x,y,mouseX,mouseY) < 151) {
+            dataLeft -= weakness;
+            pStorage += weakness/2;
             stroke(255,0,0);
-            line(this.x,this.y,pX,pY);
+            
+            if (pT <= 0) {
+                pT = 20;
+                particles.add(new Particle(x - random(-15,15),y - random(-15,15), 0, random(30,70)));
+                particles.add(new Particle(pX - random(-15,15),pY - random(30,50), 1, random(30,70)));
+            } else {pT -= 1;}
+            
+            line(this.x,this.y,mouseX,mouseY);
+            if (hasSecurity > 0) {
+                securities.add(new Security(x,y));
+                hasSecurity -= 1;
+            }
         }
     };
 }
@@ -266,7 +262,7 @@ class Security {
         if (mode == 0) {
             for (int i=computers.size()-1; i>=0; i--) {
                 Particle c = (Computer) computers.get(i);
-                if (dist(c.x,c.y,x,y) < 50) {
+                if (dist(c.x,c.y,x,y) < 100 && c.dataLeft < (c.dataSpace - 30) && dist(c.x,c.y,x,y) > 10) {
                     tx = c.x;
                     ty = c.y;
                     mode = 1;
@@ -287,6 +283,7 @@ class Security {
         }
         
         if (mode == 2) {
+            fill(255);
             if (dist(x,y,pX,pY) < 300) {text("!",x-5,y-10);} else {text("?",x-5,y-10);}
             
             if (sDelay <= 0 && dist(x,y,pX,pY) < 300) {
@@ -381,6 +378,8 @@ class Bullet {
     x += cos(rotation/180*PI)*speed;
     y += sin(rotation/180*PI)*speed;
     fill(255);
+    if (shotBy == 0) {fill(255,0,0);}
+    if (shotBy == 1) {fill(255);}
     translate(x+5, y+5);  
     rotate(rotation/180*PI);  
     rect(-5, -5, 10, 10); 
@@ -404,6 +403,7 @@ class Particle {
     float lifeTime = 0;
     float oLifeTime = 0;
     float gravity = 0;
+    float digit = 0;
     
     Particle(ox,oy,ot,ol) {
         x = ox;
@@ -411,30 +411,26 @@ class Particle {
         type = ot;
         lifeTime = ol;
         oLifeTime = ol;
-        if (type == 0 || type == 1) {
-            this.vx += random(2) - 1;
-            this.vx *= .96;
-            this.vy += random(2) - 1;
+        digit = round(random(9));
+        if (type == 0) {
+            this.vy += 0 - random(1,2);
             this.vy *= .96;
-            gravity = random(1);
+        }
+        if (type == 1) {
+            this.vy += 1.5;
+            this.vy *= .96;
         }
     };
     
     void update() {
-        if (lifeTime > 0) {lifeTime -= 1;}
-        if (lifeTime > 0 && type == 1) {lifeTime -= 1;}
+        if (lifeTime > 0 && type == 0) {lifeTime -= 1;}
+        if (type == 1 && y > pY - 30) {lifeTime -= 1;}
         this.x += this.vx;
         this.y += this.vy;
         this.y += this.gravity;
-        if (type == 0) {
-        stroke(255,0,0,255*(lifeTime/oLifeTime));
-        fill(0,0);
-        rect(this.x-10,this.y-10,10,10);
-        }
-        if (type == 1) {
-        stroke(0,0);
-        fill(255,155*(lifeTime/oLifeTime));
-        rect(this.x-1,this.y-1,2,2);
+        if (type == 0 || type == 1) {
+        fill(255,0,0,255*(lifeTime/oLifeTime));
+        text(digit,this.x-10,this.y-10);
         }
     };
 }
