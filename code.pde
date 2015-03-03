@@ -76,9 +76,8 @@ void draw() {
     }
     
     strokeWeight(1);
-    
     line(pX,pY,mouseX,mouseY);
-    
+       
     stroke(255);
     fill(0);
     rect(0,0,pStorage,10);
@@ -124,11 +123,6 @@ void keyPressed() {
             Particle c = (Computer) computers.get(i);
             c.hack();
         }
-        line(mouseX,mouseY,pX,pY);
-    }
-    
-    if (key == 'c' || key == 'C') {
-        computers.add(new Computer(mouseX,mouseY));
     }
     
     if (key == 'q' || key == 'Q') {
@@ -424,7 +418,7 @@ class Particle {
     
     void update() {
         if (lifeTime > 0 && type == 0) {lifeTime -= 1;}
-        if (type == 1 && y > pY - 30) {lifeTime -= 1;}
+        if (type == 1) {lifeTime = dist(x,y,x,pY) - 1;}
         this.x += this.vx;
         this.y += this.vy;
         this.y += this.gravity;
